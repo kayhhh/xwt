@@ -3,6 +3,8 @@
 
 use std::matches;
 
+use wtransport::tls::rustls::pki_types::CertificateDer;
+
 static_assertions::assert_impl_all!(xwt_wtransport::Endpoint<wtransport::endpoint::endpoint_side::Client>: xwt_core::endpoint::Connect);
 static_assertions::assert_impl_all!(xwt_wtransport::Endpoint<wtransport::endpoint::endpoint_side::Server>: xwt_core::endpoint::Accept);
 static_assertions::assert_impl_all!(xwt_wtransport::Session: xwt_core::base::Session);
@@ -19,13 +21,12 @@ fn setup() -> color_eyre::eyre::Result<()> {
 
 fn test_endpoint() -> xwt_wtransport::Endpoint<wtransport::endpoint::endpoint_side::Client> {
     let mut root_store = wtransport::tls::rustls::RootCertStore::empty();
-    root_store.add_parsable_certificates(&[xwt_test_assets::CERT]);
+    root_store.add_parsable_certificates([CertificateDer::from_slice(xwt_test_assets::CERT)]);
 
     let digest = xwt_cert_fingerprint::Sha256::compute_for_der(xwt_test_assets::CERT);
     tracing::info!("certificate sha256 digest: {digest}");
 
     let mut tls_config = wtransport::tls::rustls::ClientConfig::builder()
-        .with_safe_defaults()
         .with_root_certificates(root_store)
         .with_no_client_auth();
 
